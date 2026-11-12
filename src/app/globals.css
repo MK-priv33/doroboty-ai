@@ -7,6 +7,7 @@
 @import "./marketplace.css";
 @import "./records.css";
 @import "./application.css";
+@import "./experience-card.css";
 @import "./interactions.css";
 
 @theme inline {
