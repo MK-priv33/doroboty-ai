@@ -45,3 +45,7 @@ The static output is dist/. Browser checks require an already provisioned Playwr
 If Google Chrome is already installed, use `PLAYWRIGHT_CHANNEL=chrome ./scripts/verify` to run browser checks with that installation instead of downloading Playwright Chromium.
 
 To distribute a baseline participant package, run npm run package:participant -- /absolute/output/directory. This excludes Git history and instructor source material. Never distribute this repository’s history as a stage-safe packet.
+
+## Release preparation
+
+See [release and recovery runbook](docs/RELEASE.md) for the synthetic-data pilot, Vercel build settings, smoke checks, rollback and incident response. The local readiness report is `docs/production-readiness.html`. No live deployment has been verified.
