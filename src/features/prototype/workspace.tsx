@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { CheckCircle2, FileText } from "lucide-react";
+import { usePostHog } from "@posthog/react";
 import { ConfettiBurst, type ConfettiOrigin } from "@/components/confetti-burst";
 import { BackLink } from "@/components/back-link";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -29,6 +30,7 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 }
 export function PersonPicker() {
   const { state, run } = usePrototype();
+  const posthog = usePostHog();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get("next");
@@ -53,6 +55,7 @@ export function PersonPicker() {
               variant="outline"
               onClick={() => {
                 run({ type: "select_person", id: person.id });
+                posthog?.capture("person_selected", { role: person.role });
                 navigate(
                   person.role === "candidate"
                     ? (safeNext ?? "/app")
@@ -143,6 +146,7 @@ export function WorkspaceHome() {
 }
 export function ProfilePage({ preview = false }: { preview?: boolean }) {
   const { state, run } = usePrototype();
+  const posthog = usePostHog();
   const person = currentPerson(state)!;
   const [message, setMessage] = useState("");
   function save(e: FormEvent<HTMLFormElement>) {
@@ -158,8 +162,10 @@ export function ProfilePage({ preview = false }: { preview?: boolean }) {
           location: String(data.get("location")),
         },
       })
-    )
+    ) {
+      posthog?.capture("profile_saved");
       setMessage("Profil został zapisany.");
+    }
   }
   return (
     <>
@@ -235,6 +241,7 @@ export function SavedPage() {
 export function ApplyPage() {
   const { slug } = useParams();
   const { state, run } = usePrototype();
+  const posthog = usePostHog();
   const person = currentPerson(state)!;
   const navigate = useNavigate();
   const job = publishedJobs(state).find((x) => x.slug === slug);
@@ -299,6 +306,12 @@ export function ApplyPage() {
         includeExperienceCard,
       })
     ) {
+      posthog?.capture("application_submitted", {
+        job_id: job!.id,
+        job_category: job!.category,
+        includes_experience_card: includeExperienceCard,
+        answer_length: answerLength,
+      });
       submittedOnce.current = true;
       setSubmitted(true);
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -448,8 +461,14 @@ export function ApplyPage() {
                         ? { includeExperienceCard }
                         : {}),
                     })
-                  )
+                  ) {
+                    posthog?.capture("application_draft_saved", {
+                      job_id: job.id,
+                      includes_experience_card: includeExperienceCard,
+                      answer_length: answerLength,
+                    });
                     setMessage("Szkic został zapisany.");
+                  }
                 }}
               >
                 Zapisz szkic

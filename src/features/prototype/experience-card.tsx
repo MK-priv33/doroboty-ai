@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router";
+import { usePostHog } from "@posthog/react";
 import { ArrowUpRight, Check, ChevronDown } from "lucide-react";
 import { BackLink } from "@/components/back-link";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -96,6 +97,7 @@ export function ExperienceCardPage() {
 
 function ExperienceCardEditor({ initial }: { initial: ExperienceCardDraft }) {
   const { state, run, issue } = usePrototype();
+  const posthog = usePostHog();
   const [value, setValue] = useState(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [optionalOpen, setOptionalOpen] = useState(true);
@@ -139,6 +141,7 @@ function ExperienceCardEditor({ initial }: { initial: ExperienceCardDraft }) {
     event.preventDefault();
     if (!validate()) return;
     if (run({ type: "experience_card", value, complete: true })) {
+      posthog?.capture("experience_card_saved", { completion_status: "complete" });
       setDirty(false);
       setMessage("Karta jest gotowa do dołączenia do aplikacji.");
     }
@@ -292,6 +295,10 @@ function ExperienceCardEditor({ initial }: { initial: ExperienceCardDraft }) {
                 onClick={() => {
                   const example = experienceCardSchema.parse(annaCardExample);
                   if (run({ type: "experience_card", value: example, complete: true })) {
+                    posthog?.capture("experience_card_saved", {
+                      completion_status: "complete",
+                      source: "example",
+                    });
                     setValue(example);
                     setErrors({});
                     setDirty(false);
@@ -347,6 +354,7 @@ function ExperienceCardEditor({ initial }: { initial: ExperienceCardDraft }) {
                 variant="outline"
                 onClick={() => {
                   if (run({ type: "experience_card", value, complete: false })) {
+                    posthog?.capture("experience_card_saved", { completion_status: "draft" });
                     setDirty(false);
                     setMessage("Szkic karty jest zachowany. Możesz wrócić do niego w profilu.");
                   }

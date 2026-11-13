@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import posthog from "posthog-js";
 import { initialState, transition, type Action, type State } from "./model";
 import { parseState, readState, saveState, STORAGE_KEY, type StoragePort } from "./storage";
 import { retainRecoverySnapshot } from "./recovery-snapshot";
@@ -20,6 +21,7 @@ function useStore() {
   const [error, setError] = useState("");
   const [blocked, setBlocked] = useState(loaded.blocked);
   const latest = useRef(state);
+  const identifiedPersonId = useRef<string | null>(null);
   const lastSaved = useRef(loaded.raw);
   const permission = useRef<"waiting" | "ready" | "conflict" | "unavailable">("waiting");
   const [writeIssue, setWriteIssue] = useState(
@@ -108,7 +110,28 @@ function useStore() {
   }
   function run(action: Action) {
     try {
-      commit(transition(latest.current, action));
+      const next = transition(latest.current, action);
+      if (action.type === "select_person") {
+        if (
+          latest.current.activePersonId &&
+          latest.current.activePersonId !== action.id &&
+          import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+          import.meta.env.VITE_PUBLIC_POSTHOG_HOST
+        ) {
+          posthog.reset();
+          identifiedPersonId.current = null;
+        }
+        const person = next.people.find((candidate) => candidate.id === action.id);
+        if (
+          person &&
+          import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+          import.meta.env.VITE_PUBLIC_POSTHOG_HOST
+        ) {
+          posthog.identify(person.id, { name: person.name, role: person.role });
+          identifiedPersonId.current = person.id;
+        }
+      }
+      commit(next);
       return true;
     } catch (e) {
       setError(
@@ -129,6 +152,25 @@ function useStore() {
       return false;
     }
   }
+  const activePerson = state.people.find((person) => person.id === state.activePersonId);
+  useEffect(() => {
+    if (
+      !import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN ||
+      !import.meta.env.VITE_PUBLIC_POSTHOG_HOST
+    )
+      return;
+    if (!activePerson) {
+      if (identifiedPersonId.current) posthog.reset();
+      identifiedPersonId.current = null;
+      return;
+    }
+    if (identifiedPersonId.current && identifiedPersonId.current !== activePerson.id)
+      posthog.reset();
+    if (identifiedPersonId.current !== activePerson.id) {
+      posthog.identify(activePerson.id, { name: activePerson.name, role: activePerson.role });
+      identifiedPersonId.current = activePerson.id;
+    }
+  }, [activePerson]);
   useEffect(() => {
     document.documentElement.classList.remove("dark");
   }, []);
@@ -140,6 +182,7 @@ function useStore() {
     original: loaded.original,
     run,
     importState,
+    clearActivePerson: () => run({ type: "select_person", id: null }),
     clearError: () => setError(""),
     reset: () => commit(initialState(), true),
   };

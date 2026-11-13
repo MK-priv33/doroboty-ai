@@ -1,3 +1,5 @@
+import { logApplicationDiagnostic } from "./posthog-logs";
+
 export const BUILD_ID = typeof __APP_BUILD_ID__ === "string" ? __APP_BUILD_ID__ : "development";
 const codes = new Set([
   "runtime-error",
@@ -25,6 +27,7 @@ export function createDiagnostics(buildId: string) {
     record(code: DiagnosticCode) {
       // Validate at runtime too: no caller-supplied text enters the report.
       if (!codes.has(code)) return;
+      logApplicationDiagnostic(code);
       events.push({ code, at: new Date().toISOString() });
       if (events.length > 20) events.shift();
     },
