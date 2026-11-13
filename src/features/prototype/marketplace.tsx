@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowUpRight, Users, MapPin, BriefcaseBusiness, Bookmark } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Search, ArrowRight, Monitor, X } from "lucide-react";
+import { usePostHog } from "@posthog/react";
 import { BackLink } from "@/components/back-link";
 import { ResponsivePanel } from "@/components/responsive-panel";
 import { SalaryFact } from "@/features/jobs/salary-fact";
@@ -98,6 +99,7 @@ function LocalMap({ jobs }: { jobs: JobWithCompany[] }) {
 }
 export function JobsPage() {
   const { state } = usePrototype();
+  const posthog = usePostHog();
   const person = currentPerson(state);
   const [params, setParams] = useSearchParams();
   const filters = parseJobFilters(Object.fromEntries(params));
@@ -147,6 +149,11 @@ export function JobsPage() {
       else next.delete(key);
     }
     setParams(next);
+    posthog?.capture("job_search_submitted", {
+      has_query: Boolean(String(data.get("query") ?? "").trim()),
+      has_location: Boolean(String(data.get("location") ?? "").trim()),
+      result_count: filterJobs(all, parseJobFilters(Object.fromEntries(next))).length,
+    });
   }
   const locations = [...new Set(all.flatMap((x) => x.locations))];
   return (
@@ -328,6 +335,7 @@ export function JobsPage() {
 
 export function JobPage() {
   const { slug } = useParams();
+  const posthog = usePostHog();
   const location = useLocation();
   useEffect(() => {
     const target =
@@ -430,7 +438,15 @@ export function JobPage() {
                     variant="outline"
                     aria-label="Zapisz ofertę"
                     aria-pressed={saved}
-                    onClick={() => run({ type: "toggle_saved", jobId: job.id })}
+                    onClick={() => {
+                      if (run({ type: "toggle_saved", jobId: job.id }) && !saved) {
+                        posthog?.capture("job_saved", {
+                          job_id: job.id,
+                          job_category: job.category,
+                          seniority: job.seniority,
+                        });
+                      }
+                    }}
                   >
                     <Bookmark className={cn(saved && "fill-current")} />
                     Zapisz ofertę

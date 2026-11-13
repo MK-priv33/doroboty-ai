@@ -26,7 +26,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:3001. No environment file, account, database or additional service is required. Package installation requires access to the npm registry.
+Open http://127.0.0.1:3001. No environment file, account, database or additional service is required for the baseline app. Optional PostHog analytics is described below. Package installation requires access to the npm registry.
 
 Select Anna or Marek as a candidate, Karolina or Tomasz as an employer, or the instructor. Publish a job, apply, switch person and record the employer decision. Changes survive reload in this browser; settings provide export, import and reset. AI and scores simulate prepared scenarios. Use example CVs only.
 
@@ -49,3 +49,9 @@ To distribute a baseline participant package, run npm run package:participant --
 ## Release preparation
 
 See [release and recovery runbook](docs/RELEASE.md) for the synthetic-data pilot, Vercel build settings, smoke checks, rollback and incident response. The local readiness report is `docs/production-readiness.html`. No live deployment has been verified.
+
+## Optional PostHog analytics
+
+Copy `.env.example` to `.env.local` and set `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN` and `VITE_PUBLIC_POSTHOG_HOST`. The token is the public project token, never a personal or secret API key. This project uses the EU ingestion host `https://eu.i.posthog.com`. Restart the development server after setting variables. Without both values, analytics stays inactive and the prototype still runs.
+
+For Vercel, add these two variables to the existing project's Production environment and deploy the updated sources; frontend variables are embedded at build time. Do not commit local `.env` files. Product events include application submission, experience-card save, offer save, persona choice and recruiting stage changes. Custom events omit free-text answers, notes and CV contents. Session replay/autocapture follow the PostHog project configuration; Normal masking can expose visible synthetic text. Use only synthetic data. Persona IDs are shared across browsers and must not be interpreted as unique participants.
