@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import posthog from "posthog-js";
+import { canonicalAnalyticsPerson } from "./posthog-privacy";
 import { initialState, transition, type Action, type State } from "./model";
 import { parseState, readState, saveState, STORAGE_KEY, type StoragePort } from "./storage";
 import { retainRecoverySnapshot } from "./recovery-snapshot";
@@ -127,7 +128,8 @@ function useStore() {
           import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN &&
           import.meta.env.VITE_PUBLIC_POSTHOG_HOST
         ) {
-          posthog.identify(person.id, { name: person.name, role: person.role });
+          const canonical = canonicalAnalyticsPerson(person.id);
+          if (canonical) posthog.identify(person.id, canonical);
           identifiedPersonId.current = person.id;
         }
       }
@@ -167,7 +169,8 @@ function useStore() {
     if (identifiedPersonId.current && identifiedPersonId.current !== activePerson.id)
       posthog.reset();
     if (identifiedPersonId.current !== activePerson.id) {
-      posthog.identify(activePerson.id, { name: activePerson.name, role: activePerson.role });
+      const canonical = canonicalAnalyticsPerson(activePerson.id);
+      if (canonical) posthog.identify(activePerson.id, canonical);
       identifiedPersonId.current = activePerson.id;
     }
   }, [activePerson]);

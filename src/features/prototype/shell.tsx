@@ -19,6 +19,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { currentPerson } from "./model";
 import { usePrototype } from "./store";
 import { cn } from "@/lib/utils";
+import { isPrivateAnalyticsRoute } from "./posthog-privacy";
 const navigation = [
   { to: "/oferty", label: "Oferty" },
   { to: "/metodologia", label: "Metodologia" },
@@ -105,7 +106,10 @@ export function Shell() {
           {error}
         </p>
       )}
-      <div key={`${state.activePersonId}:${pathname}`}>
+      <div
+        key={`${state.activePersonId}:${pathname}`}
+        data-ph-private={isPrivateAnalyticsRoute(pathname) ? "true" : undefined}
+      >
         <Outlet />
       </div>
     </>
@@ -150,14 +154,14 @@ export function Shell() {
               <BrandMark />
               DoRoboty.ai
             </Link>
-            <div className="workspace-label">
+            <div className="workspace-label ph-no-capture">
               <span className="workspace-avatar">{person.name[0]}</span>
               <div>
                 <strong>{person.name}</strong>
                 <span>{person.headline}</span>
               </div>
             </div>
-            <nav id="workspace-nav" aria-label="Panel użytkownika">
+            <nav id="workspace-nav" aria-label="Panel użytkownika" data-ph-autocapture-safe>
               {nav.map(([to, label, Icon]) => (
                 <NavLink
                   end={to === "/app"}
@@ -195,7 +199,7 @@ export function Shell() {
                     ? "Strefa pracodawcy"
                     : "Case study"}
               </span>
-              <Link to="/auth/sign-in" onClick={clearActivePerson}>
+              <Link to="/auth/sign-in" onClick={clearActivePerson} className="ph-no-capture">
                 {person.name}
               </Link>
             </div>
@@ -216,7 +220,11 @@ export function Shell() {
                 <BrandMark />
                 <span>DoRoboty.ai</span>
               </Link>
-              <nav aria-label="Główna nawigacja" className="flex items-center gap-2 sm:gap-5">
+              <nav
+                aria-label="Główna nawigacja"
+                className="flex items-center gap-2 sm:gap-5"
+                data-ph-autocapture-safe
+              >
                 {navigation.map((item) => (
                   <Link
                     key={item.to}
@@ -297,6 +305,7 @@ export function Shell() {
               </div>
               <nav
                 aria-label="Stopka"
+                data-ph-autocapture-safe
                 className="flex flex-wrap content-start gap-x-6 gap-y-3 text-sm text-muted-foreground sm:justify-end"
               >
                 <Link to="/oferty">Oferty</Link>

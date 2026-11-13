@@ -7,6 +7,7 @@ import "./app/globals.css";
 import { RecoveryBoundary } from "./features/prototype/recovery-boundary";
 import { installRuntimeDiagnostics, recordDiagnostic } from "./features/prototype/diagnostics";
 import { logApplicationStarted } from "./features/prototype/posthog-logs";
+import { posthogPrivacyConfig } from "./features/prototype/posthog-privacy";
 
 const posthogToken = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
 const posthogHost = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
@@ -16,6 +17,7 @@ if (posthogToken && posthogHost) {
   posthog.init(posthogToken, {
     api_host: posthogHost,
     defaults: "2026-08-30",
+    ...posthogPrivacyConfig,
     logs: {
       serviceName: "doroboty-ai-web",
       environment: import.meta.env.MODE,
