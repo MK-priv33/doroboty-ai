@@ -145,9 +145,10 @@ export function PrivacyPage() {
         <p>
           Profile, aplikacje i ustawienia są przechowywane w tej przeglądarce. Po skonfigurowaniu
           PostHoga aplikacja przesyła zdarzenia użycia i informacje o wybranej fikcyjnej osobie.
-          Nagrania sesji mogą zawierać widoczne treści strony, zależnie od ustawień maskowania.
-          Używaj wyłącznie fikcyjnych danych. Plik eksportu zawiera cały lokalny scenariusz, w tym
-          notatki.
+          Nagrania sesji pokazują poruszanie się po stronie; formularze, dokumenty i prywatne panele
+          są zasłonięte. Pozostałe teksty są maskowane. Automatyczne kliknięcia zbieramy wyłącznie z
+          oznaczonej, publicznej nawigacji i przycisków strony głównej. Używaj wyłącznie fikcyjnych
+          danych. Plik eksportu zawiera cały lokalny scenariusz, w tym notatki.
         </p>
         <p>
           Możesz usunąć zmiany przyciskiem „Resetuj scenariusz” w ustawieniach lub wyczyścić dane
